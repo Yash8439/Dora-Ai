@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { useState } from "react"
 import LoginModal from "./LoginModal"
 import { useDispatch, useSelector } from "react-redux"
-import { Coins } from "lucide-react"
+import { Coins, ShieldCheck } from "lucide-react"
 import axios from "axios"
 import { setUserData } from "../redux/userSlice"
 import { useNavigate } from "react-router-dom"
@@ -23,10 +23,8 @@ const Navbar = () => {
         `${import.meta.env.VITE_SERVER_URL}/api/auth/logout`,
         { withCredentials: true }
       )
-
       dispatch(setUserData(null))
       setOpenProfile(false)
-
     } catch (error) {
       console.log(error)
     }
@@ -48,7 +46,6 @@ const Navbar = () => {
             className="flex items-center gap-2 cursor-pointer bg-white/5 p-2 px-4 rounded-2xl border border-zinc-600"
           >
             <img src="/ai2.png" className="w-7" />
-
             <span className="font-semibold text-lg bg-linear-to-r from-purple-400 to-indigo-500 bg-clip-text text-transparent">
               Dora AI
             </span>
@@ -56,14 +53,6 @@ const Navbar = () => {
 
           {/* Right Side */}
           <div className="flex items-center gap-5">
-
-            {/* Pricing */}
-            {/* <button
-              onClick={() => navigate("/pricing")}
-              className="hidden md:block text-sm text-zinc-400 hover:text-white transition"
-            >
-              Pricing
-            </button> */}
 
             {/* Credits */}
             {userData && (
@@ -107,35 +96,48 @@ const Navbar = () => {
                       transition={{ duration: 0.2 }}
                       className="absolute right-0 mt-3 w-60 rounded-xl bg-[#0b0b0b] border border-white/10 shadow-2xl overflow-hidden"
                     >
-
+                      {/* User Info */}
                       <div className="px-4 py-3 border-b border-white/10">
                         <p className="text-sm font-medium truncate text-white">
                           {userData.name}
                         </p>
-
                         <p className="text-xs text-zinc-500 truncate">
                           {userData.email}
                         </p>
                       </div>
 
+                      {/* Dashboard */}
                       <button
-                        onClick={() => navigate("/dashboard")}
+                        onClick={() => { navigate("/dashboard"); setOpenProfile(false) }}
                         className="w-full px-4 py-3 text-left text-sm hover:bg-white/5 text-white"
                       >
                         Dashboard
                       </button>
 
+                      {/* Credits - Mobile */}
                       <button
-                        onClick={() => navigate("/pricing")}
+                        onClick={() => { navigate("/pricing"); setOpenProfile(false) }}
                         className="md:hidden w-full px-4 py-3 flex items-center gap-2 text-white text-sm hover:bg-white/5"
                       >
                         <Coins size={14} className="text-yellow-400" />
                         {userData.credits} Credits
                       </button>
 
+                      {/* ✅ Admin Portal — sirf admin ko dikhega */}
+                      {userData.role === "admin" && (
+                        <button
+                          onClick={() => { navigate("/admin"); setOpenProfile(false) }}
+                          className="w-full px-4 py-3 flex items-center gap-2 text-left text-sm hover:bg-indigo-500/10 text-indigo-400 border-t border-white/10"
+                        >
+                          <ShieldCheck size={14} />
+                          Admin Portal
+                        </button>
+                      )}
+
+                      {/* Logout */}
                       <button
                         onClick={handleLogout}
-                        className="w-full px-4 py-3 text-left text-sm hover:bg-white/5 text-red-400"
+                        className="w-full px-4 py-3 text-left text-sm hover:bg-white/5 text-red-400 border-t border-white/10"
                       >
                         Logout
                       </button>
@@ -175,8 +177,3 @@ const Navbar = () => {
 }
 
 export default Navbar
-
-
-
-
-

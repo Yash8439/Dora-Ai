@@ -124,16 +124,19 @@ const Pricing = () => {
 
             <div className='relative z-10 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8'>
                 {plans.map((p, i) => (
-                    <motion.div
-                        key={i}
-                        initial={{ oapcity: 0, y: 40 }}
-                        whileInView={{ oapcity: 1, y: 0 }}
-                        transition={{ delay: i * 0.12 }}
-                        whileHover={{ y: -14, scale: 1.03 }}
-                        className={`relative rounded-3xl p-8 border backdrop-blur-xl transition-all 
-                            ${p.popular ? "border-indigo-500 bg-linear-to-b from-indigo-500/20 to-transparent shadow-2xl shadow-indigo-500/30" :
-                                "border-white/10 bg-white/5 hover:border-indigo-400 hover:bg-white/10"}`}
-                    >
+                   <motion.div
+    key={i}
+    initial={{ opacity: 0, y: 40 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    transition={{ delay: i * 0.12 }}
+    whileHover={{ y: -14, scale: 1.03 }}
+   style={p.popular ? { 
+  boxShadow: '0 0 60px rgba(99,102,241,0.6), 0 0 120px rgba(99,102,241,0.3), 0 0 200px rgba(99,102,241,0.15)' 
+} : {}}
+    className={`relative rounded-3xl p-8 border backdrop-blur-xl transition-all 
+        ${p.popular ? "border-indigo-500 bg-gradient-to-b from-indigo-500/20 to-transparent" :
+            "border-white/10 bg-white/5 hover:border-indigo-400 hover:bg-white/10"}`}
+>
                         {p.popular && <span className='absolute top-5 right-5 px-3 py-1 text-xs rounded-full bg-indigo-500'>Most Popular</span>}
                         <h1 className='text-xl font-semibold mb-2'>{p.name}</h1>
                         <p className='text-zinc-400 text-sm mb-6'>{p.description}</p>
@@ -161,6 +164,22 @@ const Pricing = () => {
                         >
                             {p.button}
                         </motion.button>
+                    </motion.div>
+                ))}
+            </div>
+            {/* Trust Badges */}
+            <div className="relative z-10 flex flex-wrap justify-center gap-4 mt-12 max-w-3xl mx-auto">
+                {[
+                    { icon: "🔒", text: "Secure Payment via Razorpay" },
+                    { icon: "⚡", text: "Instant Credit Delivery" },
+                    { icon: "💯", text: "No Subscription · Pay Once" },
+                    { icon: "🔄", text: "Credits Never Expire" },
+                ].map((badge, i) => (
+                    <motion.div key={i} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-white/10 text-sm text-zinc-400"
+                        style={{ background: 'rgba(255,255,255,0.03)' }}>
+                        <span>{badge.icon}</span>
+                        <span>{badge.text}</span>
                     </motion.div>
                 ))}
             </div>

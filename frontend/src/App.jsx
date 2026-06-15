@@ -1,18 +1,19 @@
 import React from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import Home from './pages/Home'
-// import useGetCurrentUser from './hooks/useGetCurrentUser'
+ import useGetCurrentUser from './hooks/useGetCurrentUser'
 import Dashboard from './pages/Dashboard'
 import { useSelector } from 'react-redux'
 import Generate from './pages/Generate'
 import WebsiteEditor from './pages/WebsiteEditor'
 import LiveSite from './pages/LiveSite'
 import Pricing from './pages/Pricing'
+import AdminDashboard from './pages/AdminDashboard'
 
 
 
 const App = () => {
-  // useGetCurrentUser()
+   useGetCurrentUser()
   const {userData} = useSelector(state=>state.user)
   return (
     <BrowserRouter>   
@@ -23,6 +24,7 @@ const App = () => {
          <Route path='/editor/:id' element={userData?<WebsiteEditor/>:<Home/>}/>
          <Route path='/site/:id' element={<LiveSite/>}/>
          <Route path='/pricing' element={<Pricing/>}/>
+         <Route path="/admin" element={userData?.role === "admin" ? <AdminDashboard/> : <Home/>} />
        </Routes>
     </BrowserRouter>
   )

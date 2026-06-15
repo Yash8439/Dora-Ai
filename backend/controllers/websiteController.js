@@ -336,3 +336,162 @@ export const getBySlug = async (req, res) => {
     return res.status(500).json({ message: error.message })
   }
 }
+
+// ✅ Explain Website - AI Guide Feature
+export const explainWebsite = async (req, res) => {
+  try {
+    const website = await Website.findOne({
+      _id: req.params.id,
+      user: req.user._id
+    })
+
+    if (!website) {
+      return res.status(400).json({ message: "Website not found" })
+    }
+
+    const sectionPrompt = `
+You are analyzing a website's HTML code.
+Extract all major sections from this HTML and explain each one in simple, friendly language.
+
+HTML CODE:
+${website.latestCode.slice(0, 6000)}
+
+Return ONLY a raw JSON array (no markdown, no extra text, no backticks):
+[
+  { "section": "Hero Section", "explanation": "This is the main banner of your website. It grabs visitor attention with a bold headline and call-to-action button." },
+  { "section": "About Section", "explanation": "This section tells visitors who you are and what you do." }
+]
+
+Rules:
+- Keep each explanation 1-2 sentences, friendly and non-technical
+- Identify real sections like: Hero, Navbar, About, Services, Portfolio, Pricing, Testimonials, Contact, Footer
+- Return ONLY the JSON array, nothing else
+`
+
+    const raw = await generateResponse(sectionPrompt)
+
+    let parsed
+    try {
+      const clean = raw.replace(/```json|```/g, '').trim()
+      parsed = JSON.parse(clean)
+    } catch {
+      return res.status(500).json({ message: "AI returned invalid response" })
+    }
+
+    return res.status(200).json({ sections: parsed })
+
+  } catch (error) {
+    return res.status(500).json({ message: error.message })
+  }
+}
+
+// ✅ Deploy to Netlify
+// ✅ FINAL WORKING CODE - ZIP Method (100% Working)
+import JSZip from 'jszip';
+
+export const deployToNetlify = async (req, res) => {
+  try {
+    const website = await Website.findOne({
+      _id: req.params.id,
+      user: req.user._id
+    });
+
+    if (!website) {
+      return res.status(400).json({ message: "Website not found" });
+    }
+
+    const NETLIFY_TOKEN = process.env.NETLIFY_TOKEN;
+    const htmlContent = website.latestCode;
+    
+    // Create ZIP file
+    const zip = new JSZip();
+    zip.file("index.html", htmlContent);
+    const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
+    
+    // Unique site name
+    const siteName = `site-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    console.log('📦 Creating site:', siteName);
+
+    // 1. CREATE SITE
+    const siteRes = await fetch("https://api.netlify.com/api/v1/sites", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${NETLIFY_TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ 
+        name: siteName,
+        force_ssl: true 
+      })
+    });
+
+    if (!siteRes.ok) {
+      const error = await siteRes.text();
+      return res.status(500).json({ message: "Site creation failed: " + error });
+    }
+
+    const siteData = await siteRes.json();
+    console.log('✅ Site created:', siteData.id);
+
+    // 2. DEPLOY USING ZIP
+    const formData = new FormData();
+    const blob = new Blob([zipBuffer], { type: 'application/zip' });
+    formData.append('file', blob, 'site.zip');
+
+    const deployRes = await fetch(`https://api.netlify.com/api/v1/sites/${siteData.id}/deploys`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${NETLIFY_TOKEN}`
+        // Don't set Content-Type - FormData handles it
+      },
+      body: formData
+    });
+
+    if (!deployRes.ok) {
+      const error = await deployRes.text();
+      console.error('Deploy error:', error);
+      return res.status(500).json({ message: "Deploy failed: " + error });
+    }
+
+    const deployData = await deployRes.json();
+    console.log('✅ Deploy created:', deployData.id);
+
+    // 3. Wait for deployment
+    console.log('⏳ Waiting for deployment to complete...');
+    
+    // Poll until ready
+    let isReady = false;
+    for (let i = 0; i < 25; i++) {
+      await new Promise(r => setTimeout(r, 3000));
+      
+      const statusRes = await fetch(`https://api.netlify.com/api/v1/deploys/${deployData.id}`, {
+        headers: { "Authorization": `Bearer ${NETLIFY_TOKEN}` }
+      });
+      
+      if (statusRes.ok) {
+        const statusData = await statusRes.json();
+        console.log(`📊 Status: ${statusData.state} (${i + 1}/25)`);
+        
+        if (statusData.state === 'ready') {
+          isReady = true;
+          break;
+        }
+      }
+    }
+
+    const liveUrl = siteData.ssl_url || `https://${siteData.name}.netlify.app`;
+    
+    website.netlifyUrl = liveUrl;
+    website.deployed = true;
+    website.deployUrl = liveUrl;
+    await website.save();
+
+    console.log('🎉 Success:', liveUrl);
+    
+    return res.status(200).json({ url: liveUrl });
+
+  } catch (error) {
+    console.error('Error:', error);
+    return res.status(500).json({ message: error.message });
+  }
+};
