@@ -17,7 +17,8 @@ app.use(cookieParser())
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://doraai-1.onrender.com"
+  "https://doraai-1.onrender.com",
+  "https://dora-ai-builder.netlify.app"
 ];
 
 app.use(cors({
